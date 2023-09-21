@@ -3,7 +3,7 @@
 # See LICENSE.TXT
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-set(L0_DIR "${SYCL_ADAPTER_DIR}/sycl/plugins/unified_runtime/ur/adapters/level_zero")
+set(L0_DIR ${CMAKE_CURRENT_SOURCE_DIR})# "${SYCL_ADAPTER_DIR}/sycl/plugins/unified_runtime/ur/adapters/level_zero")
 
 set(TARGET_NAME ur_adapter_level_zero)
 
@@ -102,7 +102,7 @@ add_ur_adapter(${TARGET_NAME}
     ${L0_DIR}/program.cpp
     ${L0_DIR}/queue.cpp
     ${L0_DIR}/sampler.cpp
-    ${L0_DIR}/../../ur.cpp
+    ${L0_DIR}/../ur/ur.cpp
 )
 
 set_target_properties(${TARGET_NAME} PROPERTIES
@@ -119,6 +119,6 @@ target_link_libraries(${TARGET_NAME} PRIVATE
 )
 
 target_include_directories(${TARGET_NAME} PRIVATE
-    ${L0_DIR}/../../../
+    ${L0_DIR}/../
     LevelZeroLoader-Headers
 )
