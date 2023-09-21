@@ -102,6 +102,7 @@ add_ur_adapter(${TARGET_NAME}
     ${L0_DIR}/program.cpp
     ${L0_DIR}/queue.cpp
     ${L0_DIR}/sampler.cpp
+    ${L0_DIR}/image.cpp
     ${L0_DIR}/../ur/ur.cpp
 )
 
