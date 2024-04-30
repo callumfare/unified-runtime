@@ -106,35 +106,37 @@ endif()
 if(UR_ENABLE_TRACING)
     add_compile_definitions(UR_ENABLE_TRACING)
 
-    # fetch xpti proxy library for the tracing layer
-    FetchContentSparse_Declare(xpti https://github.com/intel/llvm.git "sycl-nightly/20230703" "xpti")
-    FetchContent_MakeAvailable(xpti)
+    if (NOT TARGET xpti)
+        # fetch xpti proxy library for the tracing layer
+        FetchContentSparse_Declare(xpti https://github.com/intel/llvm.git "sycl-nightly/20230703" "xpti")
+        FetchContent_MakeAvailable(xpti)
 
-    # set -fPIC for xpti since we are linking it with a shared library
-    set_target_properties(xpti PROPERTIES POSITION_INDEPENDENT_CODE ON)
+        # set -fPIC for xpti since we are linking it with a shared library
+        set_target_properties(xpti PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-    # fetch the xptifw dispatcher, mostly used for testing
-    # these variables need to be set for xptifw to compile
-    set(XPTI_SOURCE_DIR ${xpti_SOURCE_DIR})
-    set(XPTI_DIR ${xpti_SOURCE_DIR})
-    set(XPTI_ENABLE_TESTS OFF CACHE INTERNAL "Turn off xptifw tests")
+        # fetch the xptifw dispatcher, mostly used for testing
+        # these variables need to be set for xptifw to compile
+        set(XPTI_SOURCE_DIR ${xpti_SOURCE_DIR})
+        set(XPTI_DIR ${xpti_SOURCE_DIR})
+        set(XPTI_ENABLE_TESTS OFF CACHE INTERNAL "Turn off xptifw tests")
 
-    FetchContentSparse_Declare(xptifw https://github.com/intel/llvm.git "sycl-nightly/20230703" "xptifw")
+        FetchContentSparse_Declare(xptifw https://github.com/intel/llvm.git "sycl-nightly/20230703" "xptifw")
 
-    FetchContent_MakeAvailable(xptifw)
+        FetchContent_MakeAvailable(xptifw)
 
-    check_cxx_compiler_flag("-Wno-error=maybe-uninitialized" HAS_MAYBE_UNINIT)
-    if (HAS_MAYBE_UNINIT)
-        target_compile_options(xptifw PRIVATE -Wno-error=maybe-uninitialized)
-    endif()
+        check_cxx_compiler_flag("-Wno-error=maybe-uninitialized" HAS_MAYBE_UNINIT)
+        if (HAS_MAYBE_UNINIT)
+            target_compile_options(xptifw PRIVATE -Wno-error=maybe-uninitialized)
+        endif()
 
-    set_target_properties(xptifw PROPERTIES
-        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-    )
-    if (MSVC)
-        set(TARGET_XPTI $<IF:$<CONFIG:Release>,xpti,xptid>)
-    else()
-        set(TARGET_XPTI xpti)
+        set_target_properties(xptifw PROPERTIES
+            LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+        )
+        if (MSVC)
+            set(TARGET_XPTI $<IF:$<CONFIG:Release>,xpti,xptid>)
+        else()
+            set(TARGET_XPTI xpti)
+        endif()
     endif()
 endif()
 
