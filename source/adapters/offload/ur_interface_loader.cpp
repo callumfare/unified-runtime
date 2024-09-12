@@ -37,9 +37,9 @@ UR_DLLEXPORT ur_result_t UR_APICALL urGetPlatformProcAddrTable(
     return result;
   }
   pDdiTable->pfnCreateWithNativeHandle = nullptr;
-  pDdiTable->pfnGet = nullptr;
+  pDdiTable->pfnGet = urPlatformGet;
   pDdiTable->pfnGetApiVersion = nullptr;
-  pDdiTable->pfnGetInfo = nullptr;
+  pDdiTable->pfnGetInfo = urPlatformGetInfo;
   pDdiTable->pfnGetNativeHandle = nullptr;
   pDdiTable->pfnGetBackendOption = nullptr;
   return UR_RESULT_SUCCESS;
@@ -250,13 +250,13 @@ UR_DLLEXPORT ur_result_t UR_APICALL urGetDeviceProcAddrTable(
     return result;
   }
   pDdiTable->pfnCreateWithNativeHandle = nullptr;
-  pDdiTable->pfnGet = nullptr;
+  pDdiTable->pfnGet = urDeviceGet;
   pDdiTable->pfnGetGlobalTimestamps = nullptr;
-  pDdiTable->pfnGetInfo = nullptr;
+  pDdiTable->pfnGetInfo = urDeviceGetInfo;
   pDdiTable->pfnGetNativeHandle = nullptr;
-  pDdiTable->pfnPartition = nullptr;
-  pDdiTable->pfnRelease = nullptr;
-  pDdiTable->pfnRetain = nullptr;
+  pDdiTable->pfnPartition = urDevicePartition;
+  pDdiTable->pfnRelease = urDeviceRelease;
+  pDdiTable->pfnRetain = urDeviceRetain;
   pDdiTable->pfnSelectBinary = nullptr;
   return UR_RESULT_SUCCESS;
 }
