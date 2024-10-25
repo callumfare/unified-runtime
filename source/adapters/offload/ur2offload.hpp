@@ -12,10 +12,16 @@
 #include <ur_api.h>
 
 inline ur_result_t offloadResultToUR(offload_result_t Result) {
-  switch (Result) {
-  case OFFLOAD_RESULT_SUCCESS:
+  if (Result == OFFLOAD_RESULT_SUCCESS) {
     return UR_RESULT_SUCCESS;
-  case OFFLOAD_RESULT_ERROR_UNSUPPORTED_ENUMERATION:
+  }
+
+  switch (Result->code) {
+  case OFFLOAD_ERRC_INVALID_NULL_HANDLE:
+    return UR_RESULT_ERROR_INVALID_NULL_HANDLE;
+  case OFFLOAD_ERRC_INVALID_NULL_POINTER:
+    return UR_RESULT_ERROR_INVALID_NULL_POINTER;
+  case OFFLOAD_ERRC_UNSUPPORTED_ENUMERATION:
     return UR_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
   default:
     return UR_RESULT_ERROR_UNKNOWN;
