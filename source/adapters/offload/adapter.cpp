@@ -10,7 +10,7 @@
 
 #include <atomic>
 #include <cstdint>
-#include <offload_api.h>
+#include <OffloadAPI.h>
 
 #include "logger/ur_logger.hpp"
 #include "ur/ur.hpp"
@@ -25,7 +25,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urAdapterGet(
     uint32_t, ur_adapter_handle_t *phAdapters, uint32_t *pNumAdapters) {
   if (phAdapters) {
     if (++Adapter.RefCount == 1) {
-      offloadInit();
+      olInit();
     }
     *phAdapters = &Adapter;
   }
@@ -37,7 +37,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urAdapterGet(
 
 UR_APIEXPORT ur_result_t UR_APICALL urAdapterRelease(ur_adapter_handle_t) {
   if (--Adapter.RefCount == 0) {
-    offloadShutDown();
+    olShutDown();
   };
   return UR_RESULT_SUCCESS;
 }
