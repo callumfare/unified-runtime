@@ -85,3 +85,18 @@ urPlatformGetInfo(ur_platform_handle_t hPlatform, ur_platform_info_t propName,
 
   return UR_RESULT_SUCCESS;
 }
+
+UR_APIEXPORT ur_result_t UR_APICALL
+urPlatformGetBackendOption(ur_platform_handle_t, const char *pFrontendOption,
+                           const char **ppPlatformOption) {
+  using namespace std::literals;
+  if (pFrontendOption == nullptr)
+    return UR_RESULT_ERROR_INVALID_NULL_POINTER;
+  if (pFrontendOption == "-O0"sv || pFrontendOption == "-O1"sv ||
+      pFrontendOption == "-O2"sv || pFrontendOption == "-O3"sv ||
+      pFrontendOption == ""sv) {
+    *ppPlatformOption = "";
+    return UR_RESULT_SUCCESS;
+  }
+  return UR_RESULT_ERROR_INVALID_VALUE;
+}
