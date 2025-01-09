@@ -55,8 +55,17 @@ UR_APIEXPORT ur_result_t UR_APICALL urDeviceGetInfo(ur_device_handle_t hDevice,
   case UR_DEVICE_INFO_DRIVER_VERSION:
     olInfo = OL_DEVICE_INFO_DRIVER_VERSION;
     break;
+  case UR_DEVICE_INFO_PLATFORM:
+    olInfo = OL_DEVICE_INFO_PLATFORM;
+    break;
+  // Return these immediately; temporary workaround until they land in Offload
+  case UR_DEVICE_INFO_USM_SINGLE_SHARED_SUPPORT:
+    return ReturnValue(UR_DEVICE_USM_ACCESS_CAPABILITY_FLAG_ACCESS);
+  case UR_DEVICE_INFO_BUILD_ON_SUBDEVICE:
+    return ReturnValue(false);
+  // ---
   default:
-    return UR_RESULT_ERROR_INVALID_ENUMERATION;
+    return UR_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
   }
 
   if (pPropSizeRet) {
@@ -110,4 +119,25 @@ UR_APIEXPORT ur_result_t UR_APICALL
 urDevicePartition(ur_device_handle_t, const ur_device_partition_properties_t *,
                   uint32_t, ur_device_handle_t *, uint32_t *) {
   return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+UR_APIEXPORT ur_result_t UR_APICALL urDeviceSelectBinary(
+    ur_device_handle_t hDevice, const ur_device_binary_t *pBinaries,
+    uint32_t NumBinaries, uint32_t *pSelectedBinary) {
+  std::ignore = hDevice;
+  std::ignore = pBinaries;
+  std::ignore = NumBinaries;
+  std::ignore = pSelectedBinary;
+
+  // TODO: Don't hard code nvptx64!!!
+  const char *image_target = UR_DEVICE_BINARY_TARGET_NVPTX64;
+  for (uint32_t i = 0; i < NumBinaries; ++i) {
+    if (strcmp(pBinaries[i].pDeviceTargetSpec, image_target) == 0) {
+      *pSelectedBinary = i;
+      return UR_RESULT_SUCCESS;
+    }
+  }
+
+  // No image can be loaded for the given device
+  return UR_RESULT_ERROR_INVALID_BINARY;
 }
