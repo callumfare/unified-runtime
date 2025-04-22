@@ -10,21 +10,37 @@ UR_APIEXPORT ur_result_t UR_APICALL urDeviceGet(ur_platform_handle_t hPlatform,
                                                 ur_device_handle_t *phDevices,
                                                 uint32_t *pNumDevices) {
 
+  uint32_t NumDevices = 0;
+  // Pass a few things to the callback (we can't use a lambda with captures)
+  using ParamsT = struct {
+    uint32_t DeviceLimit;
+    uint32_t &NumDevices;
+    ol_platform_handle_t Platform;
+    ol_device_handle_t *DevicesOut;
+  };
+  ParamsT Params = {NumEntries, NumDevices,
+                    reinterpret_cast<ol_platform_handle_t>(hPlatform),
+                    reinterpret_cast<ol_device_handle_t *>(phDevices)};
+
+  olIterateDevices(
+      [](ol_device_handle_t D, void *Data) {
+        auto Params = reinterpret_cast<ParamsT *>(Data);
+        ol_platform_handle_t Platform = nullptr;
+        olGetDeviceInfo(D, OL_DEVICE_INFO_PLATFORM, sizeof(Platform),
+                        &Platform);
+        if (Platform == Params->Platform) {
+          if (Params->DevicesOut) {
+            Params->DevicesOut[Params->NumDevices] = D;
+          }
+          Params->NumDevices++;
+        }
+        return Params->NumDevices == Params->DeviceLimit;
+      },
+      &Params);
+
   if (pNumDevices) {
-    if (auto Res = olGetDeviceCount(
-            reinterpret_cast<ol_platform_handle_t>(hPlatform), pNumDevices)) {
-      return offloadResultToUR(Res);
-    }
+    *pNumDevices = NumDevices;
   }
-
-  if (phDevices) {
-    if (auto Res = olGetDevice(
-            reinterpret_cast<ol_platform_handle_t>(hPlatform), NumEntries,
-            reinterpret_cast<ol_device_handle_t *>(phDevices))) {
-      return offloadResultToUR(Res);
-    }
-  }
-
   return UR_RESULT_SUCCESS;
 }
 

@@ -3,6 +3,7 @@
 #include <ur_api.h>
 
 #include "context.hpp"
+#include "queue.hpp"
 #include "ur2offload.hpp"
 
 UR_APIEXPORT ur_result_t UR_APICALL urQueueCreate(
@@ -11,29 +12,38 @@ UR_APIEXPORT ur_result_t UR_APICALL urQueueCreate(
 
   assert(hContext->Device == hDevice);
 
-  ol_queue_handle_t OffloadQueue;
+  ur_queue_handle_t Queue = new ur_queue_handle_t_();
   auto Res = olCreateQueue(reinterpret_cast<ol_device_handle_t>(hDevice),
-                           &OffloadQueue);
+                           &Queue->OffloadQueue);
   if (Res != OL_SUCCESS) {
+    delete Queue;
     return offloadResultToUR(Res);
   }
 
-  *phQueue = reinterpret_cast<ur_queue_handle_t>(OffloadQueue);
+  Queue->OffloadDevice = reinterpret_cast<ol_device_handle_t>(hDevice);
+
+  *phQueue = Queue;
 
   return UR_RESULT_SUCCESS;
 }
 
 UR_APIEXPORT ur_result_t UR_APICALL urQueueRetain(ur_queue_handle_t hQueue) {
-  auto OffloadQueue = reinterpret_cast<ol_queue_handle_t>(hQueue);
-  return offloadResultToUR(olRetainQueue(OffloadQueue));
+  hQueue->RefCount++;
+  return UR_RESULT_SUCCESS;
 }
 
 UR_APIEXPORT ur_result_t UR_APICALL urQueueRelease(ur_queue_handle_t hQueue) {
-  auto OffloadQueue = reinterpret_cast<ol_queue_handle_t>(hQueue);
-  return offloadResultToUR(olReleaseQueue(OffloadQueue));
+  if (--hQueue->RefCount == 0) {
+    auto Res = olDestroyQueue(hQueue->OffloadQueue);
+    if (Res) {
+      return offloadResultToUR(Res);
+    }
+    delete hQueue;
+  }
+
+  return UR_RESULT_SUCCESS;
 }
 
 UR_APIEXPORT ur_result_t UR_APICALL urQueueFinish(ur_queue_handle_t hQueue) {
-  auto OffloadQueue = reinterpret_cast<ol_queue_handle_t>(hQueue);
-  return offloadResultToUR(olFinishQueue(OffloadQueue));
+  return offloadResultToUR(olWaitQueue(hQueue->OffloadQueue));
 }

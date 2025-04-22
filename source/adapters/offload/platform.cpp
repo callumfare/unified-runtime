@@ -1,22 +1,26 @@
 #include <OffloadAPI.h>
+#include <unordered_set>
 #include <ur/ur.hpp>
 #include <ur_api.h>
 
+#include "adapter.hpp"
 #include "ur2offload.hpp"
 
 UR_APIEXPORT ur_result_t UR_APICALL
 urPlatformGet(ur_adapter_handle_t *, uint32_t, uint32_t NumEntries,
               ur_platform_handle_t *phPlatforms, uint32_t *pNumPlatforms) {
+
   if (pNumPlatforms) {
-    if (auto Res = olGetPlatformCount(pNumPlatforms))
-      return offloadResultToUR(Res);
+    *pNumPlatforms = Adapter.Platforms.size();
   }
 
   if (phPlatforms) {
-    if (auto Res = olGetPlatform(
-            NumEntries,
-            reinterpret_cast<ol_platform_handle_t *>(phPlatforms))) {
-      return offloadResultToUR(Res);
+    size_t PlatformIndex = 0;
+    for (auto &Platform : Adapter.Platforms) {
+      phPlatforms[PlatformIndex++] = reinterpret_cast<ur_platform_handle_t>(Platform);
+      if (PlatformIndex == NumEntries) {
+        break;
+      }
     }
   }
 
@@ -78,6 +82,7 @@ urPlatformGetInfo(ur_platform_handle_t hPlatform, ur_platform_info_t propName,
         *urPropPtr = UR_PLATFORM_BACKEND_HIP;
         break;
       default:
+        *urPropPtr = UR_PLATFORM_BACKEND_UNKNOWN;
         break;
       }
     }

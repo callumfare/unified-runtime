@@ -11,21 +11,49 @@
 #include <atomic>
 #include <cstdint>
 #include <OffloadAPI.h>
+#include <unordered_set>
 
-#include "logger/ur_logger.hpp"
+#include "adapter.hpp"
 #include "ur/ur.hpp"
 #include "ur_api.h"
 
-struct ur_adapter_handle_t_ {
-  std::atomic<uint32_t> RefCount = 0;
-  logger::Logger &Logger = logger::get_logger("offload");
-} Adapter;
+ur_adapter_handle_t_ Adapter{};
+
+// Initialize liboffload and perform the initial platform and device discovery
+ur_result_t ur_adapter_handle_t_::init() {
+  auto Res = olInit();
+
+  // Discover every platform that isn't the host platform.
+  // Use an unordered_set to deduplicate platforms we discover multiple times
+  // from different devices.
+  // Also discover the host device. We only expect one so don't need to worry
+  // about overwriting it.
+  Res = olIterateDevices(
+      [](ol_device_handle_t D, void *UserData) {
+        auto Adapter = static_cast<ur_adapter_handle_t>(UserData);
+        ol_platform_handle_t Platform;
+        olGetDeviceInfo(D, OL_DEVICE_INFO_PLATFORM, sizeof(Platform),
+                        &Platform);
+        ol_platform_backend_t Backend;
+        olGetPlatformInfo(Platform, OL_PLATFORM_INFO_BACKEND, sizeof(Backend),
+                          &Backend);
+        if (Backend == OL_PLATFORM_BACKEND_HOST) {
+          Adapter->HostDevice = D;
+        } else if (Backend != OL_PLATFORM_BACKEND_UNKNOWN) {
+          Adapter->Platforms.insert(Platform);
+        }
+        return false;
+      },
+      this);
+
+  return UR_RESULT_SUCCESS;
+}
 
 UR_APIEXPORT ur_result_t UR_APICALL urAdapterGet(
     uint32_t, ur_adapter_handle_t *phAdapters, uint32_t *pNumAdapters) {
   if (phAdapters) {
     if (++Adapter.RefCount == 1) {
-      olInit();
+      Adapter.init();
     }
     *phAdapters = &Adapter;
   }

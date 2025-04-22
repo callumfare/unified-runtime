@@ -1,7 +1,10 @@
-#include <assert.h>
 #include <OffloadAPI.h>
+#include <assert.h>
 #include <ur_api.h>
 
+#include "event.hpp"
+#include "kernel.hpp"
+#include "queue.hpp"
 #include "ur2offload.hpp"
 
 UR_APIEXPORT ur_result_t UR_APICALL urEnqueueKernelLaunch(
@@ -13,6 +16,9 @@ UR_APIEXPORT ur_result_t UR_APICALL urEnqueueKernelLaunch(
   (void)numEventsInWaitList;
   (void)phEventWaitList;
   //
+
+  (void) pGlobalWorkOffset;
+  (void) pLocalWorkSize;
 
   assert(workDim == 1);
 
@@ -26,17 +32,19 @@ UR_APIEXPORT ur_result_t UR_APICALL urEnqueueKernelLaunch(
   LaunchArgs.GroupSizeZ = 1;
 
   ol_event_handle_t EventOut;
-  auto Ret =
-      olEnqueueKernelLaunch(reinterpret_cast<ol_queue_handle_t>(hQueue),
-                            reinterpret_cast<ol_kernel_handle_t>(hKernel),
-                            &LaunchArgs, &EventOut);
+  auto Ret = olLaunchKernel(
+      hQueue->OffloadQueue, hQueue->OffloadDevice, hKernel->OffloadKernel,
+      hKernel->Args.getPointers().data(), hKernel->Args.getPointers().size(),
+      &LaunchArgs, &EventOut);
 
   if (Ret != OL_SUCCESS) {
     return offloadResultToUR(Ret);
   }
 
   if (phEvent) {
-    *phEvent = reinterpret_cast<ur_event_handle_t>(EventOut);
+    auto *Event = new ur_event_handle_t_();
+    Event->OffloadEvent = EventOut;
+    *phEvent = Event;
   }
   return UR_RESULT_SUCCESS;
 }

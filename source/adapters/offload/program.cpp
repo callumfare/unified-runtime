@@ -4,6 +4,7 @@
 #include <cuda.h>
 
 #include "context.hpp"
+#include "program.hpp"
 #include "ur2offload.hpp"
 
 UR_APIEXPORT ur_result_t UR_APICALL urProgramCreateWithBinary(
@@ -13,7 +14,6 @@ UR_APIEXPORT ur_result_t UR_APICALL urProgramCreateWithBinary(
   if (numDevices > 1) {
     return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
   }
-
 
   // Workaround for Offload not supporting PTX binaries. Force CUDA programs
   // to be linked so they end up as CUBIN.
@@ -36,20 +36,19 @@ UR_APIEXPORT ur_result_t UR_APICALL urProgramCreateWithBinary(
     void *CuBin = nullptr;
     size_t CuBinSize = 0;
     cuLinkComplete(State, &CuBin, &CuBinSize);
-    RealBinary = (uint8_t*) CuBin;
+    RealBinary = (uint8_t *)CuBin;
     RealLength = CuBinSize;
     DidLink = true;
     fprintf(stderr, "Performed CUDA bin workaround (size = %lu)\n", RealLength);
-
   } else {
     RealBinary = const_cast<uint8_t *>(ppBinaries[0]);
     RealLength = pLengths[0];
   }
 
-  ol_program_handle_t OffloadProgram;
+  ur_program_handle_t Program = new ur_program_handle_t_();
   auto Res =
       olCreateProgram(reinterpret_cast<ol_device_handle_t>(hContext->Device),
-                      RealBinary, RealLength, &OffloadProgram);
+                      RealBinary, RealLength, &Program->OffloadProgram);
 
   // Program owns the linked module now
   if (DidLink) {
@@ -57,10 +56,11 @@ UR_APIEXPORT ur_result_t UR_APICALL urProgramCreateWithBinary(
   }
 
   if (Res != OL_SUCCESS) {
+    delete Program;
     return offloadResultToUR(Res);
   }
 
-  *phProgram = reinterpret_cast<ur_program_handle_t>(OffloadProgram);
+  *phProgram = Program;
 
   return UR_RESULT_SUCCESS;
 }
@@ -83,12 +83,19 @@ UR_APIEXPORT ur_result_t UR_APICALL urProgramBuildExp(ur_program_handle_t,
 
 UR_APIEXPORT ur_result_t UR_APICALL
 urProgramRetain(ur_program_handle_t hProgram) {
-  auto OffloadProgram = reinterpret_cast<ol_program_handle_t>(hProgram);
-  return offloadResultToUR(olRetainProgram(OffloadProgram));
+  hProgram->RefCount++;
+  return UR_RESULT_SUCCESS;
 }
 
 UR_APIEXPORT ur_result_t UR_APICALL
 urProgramRelease(ur_program_handle_t hProgram) {
-  auto OffloadProgram = reinterpret_cast<ol_program_handle_t>(hProgram);
-  return offloadResultToUR(olReleaseProgram(OffloadProgram));
+  if (--hProgram->RefCount == 0) {
+    auto Res = olDestroyProgram(hProgram->OffloadProgram);
+    if (Res) {
+      return offloadResultToUR(Res);
+    }
+    delete hProgram;
+  }
+
+  return UR_RESULT_SUCCESS;
 }
