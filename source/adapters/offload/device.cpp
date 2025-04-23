@@ -62,6 +62,8 @@ UR_APIEXPORT ur_result_t UR_APICALL urDeviceGetInfo(ur_device_handle_t hDevice,
     return ReturnValue("");
   case UR_DEVICE_INFO_EXTENSIONS:
     return ReturnValue("");
+  case UR_DEVICE_INFO_USE_NATIVE_ASSERT:
+    return ReturnValue(false);
   case UR_DEVICE_INFO_TYPE:
     olInfo = OL_DEVICE_INFO_TYPE;
     break;
@@ -74,12 +76,10 @@ UR_APIEXPORT ur_result_t UR_APICALL urDeviceGetInfo(ur_device_handle_t hDevice,
   case UR_DEVICE_INFO_PLATFORM:
     olInfo = OL_DEVICE_INFO_PLATFORM;
     break;
-  // Return these immediately; temporary workaround until they land in Offload
   case UR_DEVICE_INFO_USM_SINGLE_SHARED_SUPPORT:
     return ReturnValue(UR_DEVICE_USM_ACCESS_CAPABILITY_FLAG_ACCESS);
   case UR_DEVICE_INFO_BUILD_ON_SUBDEVICE:
     return ReturnValue(false);
-  // ---
   default:
     return UR_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
   }
@@ -145,7 +145,7 @@ UR_APIEXPORT ur_result_t UR_APICALL urDeviceSelectBinary(
   std::ignore = NumBinaries;
   std::ignore = pSelectedBinary;
 
-  // TODO: Don't hard code nvptx64!!!
+  // TODO: Don't hard code nvptx64!
   const char *image_target = UR_DEVICE_BINARY_TARGET_NVPTX64;
   for (uint32_t i = 0; i < NumBinaries; ++i) {
     if (strcmp(pBinaries[i].pDeviceTargetSpec, image_target) == 0) {

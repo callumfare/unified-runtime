@@ -30,12 +30,13 @@ UR_APIEXPORT ur_result_t UR_APICALL urEnqueueKernelLaunch(
   LaunchArgs.GroupSizeX = 1;
   LaunchArgs.GroupSizeY = 1;
   LaunchArgs.GroupSizeZ = 1;
+  LaunchArgs.DynSharedMemory = 0;
 
   ol_event_handle_t EventOut;
-  auto Ret = olLaunchKernel(
-      hQueue->OffloadQueue, hQueue->OffloadDevice, hKernel->OffloadKernel,
-      hKernel->Args.getPointers().data(), hKernel->Args.getPointers().size(),
-      &LaunchArgs, &EventOut);
+  auto Ret =
+      olLaunchKernel(hQueue->OffloadQueue, hQueue->OffloadDevice,
+                     hKernel->OffloadKernel, hKernel->Args.getStorage(),
+                     hKernel->Args.getStorageSize(), &LaunchArgs, &EventOut);
 
   if (Ret != OL_SUCCESS) {
     return offloadResultToUR(Ret);

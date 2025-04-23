@@ -279,12 +279,8 @@ UR_DLLEXPORT ur_result_t UR_APICALL urGetCommandBufferExpProcAddrTable(
   pDdiTable->pfnAppendMemBufferReadRectExp = nullptr;
   pDdiTable->pfnAppendMemBufferWriteExp = nullptr;
   pDdiTable->pfnAppendMemBufferWriteRectExp = nullptr;
-  pDdiTable->pfnEnqueueExp = nullptr;
   pDdiTable->pfnUpdateKernelLaunchExp = nullptr;
   pDdiTable->pfnGetInfoExp = nullptr;
-  pDdiTable->pfnCommandGetInfoExp = nullptr;
-  pDdiTable->pfnReleaseCommandExp = nullptr;
-  pDdiTable->pfnRetainCommandExp = nullptr;
 
   return retVal;
 }

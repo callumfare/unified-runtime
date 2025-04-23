@@ -65,7 +65,8 @@ UR_APIEXPORT ur_result_t UR_APICALL urAdapterGet(
 
 UR_APIEXPORT ur_result_t UR_APICALL urAdapterRelease(ur_adapter_handle_t) {
   if (--Adapter.RefCount == 0) {
-    olShutDown();
+    // This can crash when tracing is enabled.
+    // olShutDown();
   };
   return UR_RESULT_SUCCESS;
 }

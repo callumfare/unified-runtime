@@ -1,8 +1,8 @@
 #pragma once
 
+#include <OffloadAPI.h>
 #include <array>
 #include <cstring>
-#include <OffloadAPI.h>
 #include <numeric>
 #include <ur_api.h>
 #include <vector>
@@ -18,11 +18,12 @@ struct ur_kernel_handle_t_ : RefCounted {
     using args_size_t = std::vector<size_t>;
     using args_ptr_t = std::vector<void *>;
     args_t Storage;
+    size_t StorageUsed = 0;
     args_size_t ParamSizes;
     args_ptr_t Pointers;
 
     // Add an argument. If it already exists, it is replaced. Gaps are filled
-    // with empty arguments. Previous setArgsData calls are invalidated.
+    // with empty arguments.
     void addArg(size_t Index, size_t Size, const void *Arg) {
       if (Index + 1 > Pointers.size()) {
         Pointers.resize(Index + 1);
@@ -40,6 +41,10 @@ struct ur_kernel_handle_t_ : RefCounted {
     const args_ptr_t &getPointers() const noexcept { return Pointers; }
 
     const char *getStorage() const noexcept { return Storage.data(); }
+
+    size_t getStorageSize() const noexcept {
+      return std::accumulate(std::begin(ParamSizes), std::end(ParamSizes), 0);
+    }
   };
 
   ol_kernel_handle_t OffloadKernel;

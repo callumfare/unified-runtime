@@ -7,7 +7,7 @@
 #include "ur2offload.hpp"
 
 UR_APIEXPORT ur_result_t UR_APICALL
-urPlatformGet(ur_adapter_handle_t *, uint32_t, uint32_t NumEntries,
+urPlatformGet(ur_adapter_handle_t, uint32_t NumEntries,
               ur_platform_handle_t *phPlatforms, uint32_t *pNumPlatforms) {
 
   if (pNumPlatforms) {
@@ -17,7 +17,8 @@ urPlatformGet(ur_adapter_handle_t *, uint32_t, uint32_t NumEntries,
   if (phPlatforms) {
     size_t PlatformIndex = 0;
     for (auto &Platform : Adapter.Platforms) {
-      phPlatforms[PlatformIndex++] = reinterpret_cast<ur_platform_handle_t>(Platform);
+      phPlatforms[PlatformIndex++] =
+          reinterpret_cast<ur_platform_handle_t>(Platform);
       if (PlatformIndex == NumEntries) {
         break;
       }
